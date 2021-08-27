@@ -1,0 +1,199 @@
+name: 'Trigger Jenkins Job'
+description: 'I am used to trigger a Jenkins job and return the success/failure of the job run'
+inputs:
+  jenkins-server:  # URL of the jenkins server
+    description: 'URL of the Jenkins server'
+    required: true
+  jenkins-job: # The name of the jenkins job to run
+    description: 'The name of the jenkins job to run'
+    required: true
+  jenkins-username: # user name for accessing jenkins
+    description: 'User name for accessing Jenkins. Store this in a secret for security'
+    required: true
+  jenkins-pat: # personal Access token for accessing Jenkins
+    description: 'Personal Access Token for accessing Jenkins. Store this in a secret for security'
+    required: true
+  poll-time: # how often to poll the jenkins server for results
+    description: 'How often to poll the jenkins server for results'
+    required: true
+    default: 10
+  timeout-value: # How long to poll before timing out the action
+    description: 'How long (seconds) to poll before the action times out'
+    required: true
+    default: 600
+  verbose: # true/false - turns on extra logging
+    description: 'enables extra logging'
+    required: false
+    default: false
+runs:
+  using: "composite"
+  steps:
+    - run: echo Hello ${{ inputs.who-to-greet }}.
+      shell: bash
+    - id: trigger-jenkins-job-using-api
+      run: |
+        #Parameters
+        urlOfJenkinsServer="${{ inputs.jenkins-server }}"
+        jenkinsJobName="${{ inputs.jenkins-job }}"
+        pollTime=${{ inputs.poll-time }}
+        timeoutValue=${{ inputs.timeout-value }}
+        verbose=${{ inputs.verbose }}
+        userName=${{ inputs.jenkins-username }}
+        password=${{ inputs.jenkins-pat }}
+
+        startTime=$(date)
+        startTimeSeconds=$(date -d "$startTime" +%s) 
+        endTime=$(date -d "$startTime + $timeoutValue seconds")
+        endTimeSeconds=$(date -d "$endTime" +%s)
+
+        echo $startTimeSeconds
+        echo $endTimeSeconds
+
+        
+
+        #STEP 1: Trigger the Jenkins Job
+        #This will return a 201 if the job is created, so we need to test for this
+
+        #Generate Crumb value
+        CRUMB=`curl -s -u "$userName:$password" $urlOfJenkinsServer'/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,":",//crumb)'`
+        
+        #TRIGGERJOBJSON=$(curl -I -s -X POST -u "${{secrets.JENKINS_USERNAME}}:${{secrets.JENKINS_API_TOKEN}}"  -H "$CRUMB" "$urlOfJenkinsBuildToStart"/build)
+        TRIGGERJOBJSON=$(curl -I -s -X POST -u "$userName:$password"  -H "$CRUMB" "$urlOfJenkinsServer"/job/"$jenkinsJobName"/build)
+        echo "TRIGGERJOBJSON:"
+        echo "--------------------------------------"
+        echo $TRIGGERJOBJSON
+        echo "--------------------------------------"
+
+        #STEP 2: Did STEP 1 return a 201. If so, continue, if not, stop the script
+        #Regex to get the queue URL
+        regex="Location:\s*(http.*\/queue\/item\/([0-9]+)\/)"
+        #Does the returned value contain 201 Created
+        if [[ "$TRIGGERJOBJSON" == *"201 Created"* ]]; then
+          echo "201 Created Found"
+          echo "--------------------------------------"
+        else
+          echo "201 Created NOT FOUND. Exiting script with error"
+          echo "--------------------------------------"
+          exit 1
+        fi
+
+        #STEP 3: Get the queue location from TRIGGERJOBJSON
+        #Get the queue URL
+        
+        if [[ $TRIGGERJOBJSON =~ $regex ]]; then
+          echo "Found queue URL:"
+          QUEUEURL=${BASH_REMATCH[1]} ;
+          echo $QUEUEURL ; 
+          echo "--------------------------------------"
+          #Queue Number in case we need it later
+          #echo ${BASH_REMATCH[2]} ;  
+        else 
+          echo "Queue URL NOT FOUND. Exiting script with error"
+          echo "--------------------------------------"
+          exit 1 
+        fi
+
+        #STEP 4: Get the JobID and URL using the queue location
+        #Sleep to ensure the job gets started. Sometimes Jenkins has a few seconds pause
+        sleep 10
+        BUILDJSON=$(curl -X GET -u "${{secrets.JENKINS_USERNAME}}:${{secrets.JENKINS_API_TOKEN}}"   "$QUEUEURL/api/json?pretty=true")
+        echo "BUILDJSON:"
+        echo "--------------------------------------"
+        echo $BUILDJSON
+        echo "--------------------------------------"
+
+        #regex_blocked_status="\"blocked\"\s*:\s*([a-z]+)"
+        regex="\"blocked\"\s*:\s*([a-z]+).*\"executable\".*?\"number\"\s*:\s*([0-9]+).*?\"url\"\s*:\s*\"(.*?)\""
+        if [[ $BUILDJSON =~ $regex ]]; then
+          echo "blocked: " ${BASH_REMATCH[1]} ;
+          echo "build number: " ${BASH_REMATCH[2]} ;
+          echo "build URL: " ${BASH_REMATCH[3]} ;
+          BUILDURL=${BASH_REMATCH[3]};
+          if [[ "${BASH_REMATCH[1]}" == "true" ]]; then
+            echo "Build Blocked. Exiting script with error"
+            echo "--------------------------------------"
+            exit 1
+          fi
+        else
+          echo "Build number/URL NOT FOUND. Exiting script with error"
+          echo "--------------------------------------"
+          exit 1 
+        fi
+
+        #At this point, we have the URL for the build job, so now we can query the status of the job until something happens
+
+        #STEP 5: Using the Job URL, query the job until we get some sort of code returned (success, failure, etc) and take appropriate steps
+        #Potential Values: https://javadoc.jenkins-ci.org/hudson/model/Result.html
+        #SUCCESS - Build had no errors
+        #UNSTABLE - Build had some errors but they were not fatal
+        #FAILURE - Build had a fatal error
+        #NOT_BUILT - Module was not build
+        #ABORTED - Manually aborted
+        #Short pause
+        sleep 2
+        JOBSTATUSJSON=$(curl -X GET -u "${{secrets.JENKINS_USERNAME}}:${{secrets.JENKINS_API_TOKEN}}"   "$BUILDURL/api/json?pretty=true")
+        echo "JOBSTATUSJSON:"
+        echo "--------------------------------------"
+        echo $JOBSTATUSJSON
+        echo "--------------------------------------"
+
+        regex="\"building\"\s*:\s*([a-z]+).*?\"result\"\s*:\s*\"?([a-zA-Z]+)\"?."
+        if [[ $JOBSTATUSJSON =~ $regex ]]; then
+          echo "Job Status"
+          echo "building: " ${BASH_REMATCH[1]} ;
+          echo "result: " ${BASH_REMATCH[2]} ;
+          BUILDING=${BASH_REMATCH[1]} ;
+          RESULT=${BASH_REMATCH[2]} ;
+        else
+          echo "Build status NOT FOUND. Exiting script with error"
+          echo "--------------------------------------"
+          exit 1 
+        fi
+
+
+        while [ "$BUILDING" == "true" ]
+        do 
+            #WAIT pollTime SECONDS
+            sleep $pollTime
+            currentTimeSeconds=$(date +%s)
+            echo $currentTimeSeconds
+            echo $endTimeSeconds
+            if [[ "$currentTimeSeconds" > "$endTimeSeconds" ]]; then
+              echo "Timeout value reached. Exiting with error due to timeout"
+              echo "--------------------------------------"
+              exit 1
+            fi
+            #Get the status
+            JOBSTATUSJSON=$(curl -X GET -u "${{secrets.JENKINS_USERNAME}}:${{secrets.JENKINS_API_TOKEN}}"   "$BUILDURL/api/json?pretty=true")
+            regex="\"building\"\s*:\s*([a-z]+).*?\"result\"\s*:\s*\"?([a-zA-Z]+)\"?."
+            if [[ $JOBSTATUSJSON =~ $regex ]]; then
+                echo "Job Status"
+                echo "building: " ${BASH_REMATCH[1]} ;
+                echo "result: " ${BASH_REMATCH[2]} ;
+                BUILDING=${BASH_REMATCH[1]} ;
+                RESULT=${BASH_REMATCH[2]} ;
+                #building=${BASH_REMATCH[1]}
+                #building_result=${BASH_REMATCH[2]}
+            else
+                echo "Build status NOT FOUND. Exiting script with error"
+                echo "--------------------------------------"
+                exit 1 
+            fi
+        done 
+
+        #Once I reach here, building is false, so the job isn't running any longer
+        #Therefor, we can check the result
+        case $RESULT in
+            SUCCESS)
+                echo "Build completed successfully"
+                echo "--------------------------------------"
+                exit 0
+                ;;
+            *)
+                echo "Build DID NOT COMPLETE successfully"
+                echo "--------------------------------------"
+                exit 1
+                ;;
+        esac
+      shell: bash
+    
