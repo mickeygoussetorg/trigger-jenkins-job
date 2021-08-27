@@ -8,8 +8,14 @@ jobs:
 
   testaction:
     
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
 
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest 
     
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
@@ -23,6 +29,6 @@ jobs:
           jenkins-username: ${{ secrets.JENKINS_USERNAME }} # user name for accessing jenkins
           jenkins-pat: ${{ secrets.JENKINS_PAT }} # personal Access token for accessing Jenkins
           poll-time: 10 # how often to poll the jenkins server for results
-          timeout-value: 20 # How long to poll before timing out the action
+          timeout-value: 600 # How long to poll before timing out the action
           verbose: false # true/false - turns on extra logging
       
