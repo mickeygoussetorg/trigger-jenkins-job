@@ -14,22 +14,21 @@ inputs:
     description: 'Personal Access Token for accessing Jenkins. Store this in a secret for security'
     required: true
   poll-time: # how often to poll the jenkins server for results
-    description: 'How often to poll the jenkins server for results'
+    description: 'How often (seconds) to poll the jenkins server for results'
     required: true
     default: 10
   timeout-value: # How long to poll before timing out the action
     description: 'How long (seconds) to poll before the action times out'
     required: true
     default: 600
-  verbose: # true/false - turns on extra logging
-    description: 'enables extra logging'
+  verbose: # true/false - turns on verbose logging
+    description: 'true/false - turns on verbose logging'
     required: false
     default: false
+  
 runs:
   using: "composite"
   steps:
-    - run: echo Hello ${{ inputs.who-to-greet }}.
-      shell: bash
     - id: trigger-jenkins-job-using-api
       run: |
         #Parameters
@@ -46,29 +45,26 @@ runs:
         endTime=$(date -d "$startTime + $timeoutValue seconds")
         endTimeSeconds=$(date -d "$endTime" +%s)
 
-        echo $startTimeSeconds
-        echo $endTimeSeconds
-
-        
-
         #STEP 1: Trigger the Jenkins Job
         #This will return a 201 if the job is created, so we need to test for this
 
         #Generate Crumb value
         CRUMB=`curl -s -u "$userName:$password" $urlOfJenkinsServer'/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,":",//crumb)'`
-        
         TRIGGERJOBJSON=$(curl -I -s -X POST -u "$userName:$password"  -H "$CRUMB" "$urlOfJenkinsServer"/job/"$jenkinsJobName"/build)
-        echo "TRIGGERJOBJSON:"
-        echo "--------------------------------------"
-        echo $TRIGGERJOBJSON
-        echo "--------------------------------------"
+        
+        if [[ $verbose == true ]]; then
+          echo "Results of Triggering The Job:"
+          echo "--------------------------------------"
+          echo $TRIGGERJOBJSON
+          echo "--------------------------------------"
+        fi
 
         #STEP 2: Did STEP 1 return a 201. If so, continue, if not, stop the script
         #Regex to get the queue URL
         regex="Location:\s*(http.*\/queue\/item\/([0-9]+)\/)"
         #Does the returned value contain 201 Created
         if [[ "$TRIGGERJOBJSON" == *"201 Created"* ]]; then
-          echo "201 Created Found"
+          echo "201 Created Found - Job triggered successfully"
           echo "--------------------------------------"
         else
           echo "201 Created NOT FOUND. Exiting script with error"
@@ -80,12 +76,13 @@ runs:
         #Get the queue URL
         
         if [[ $TRIGGERJOBJSON =~ $regex ]]; then
-          echo "Found queue URL:"
-          QUEUEURL=${BASH_REMATCH[1]} ;
-          echo $QUEUEURL ; 
+          echo "Queue URL Found."
           echo "--------------------------------------"
-          #Queue Number in case we need it later
-          #echo ${BASH_REMATCH[2]} ;  
+          QUEUEURL=${BASH_REMATCH[1]} ;
+          if [[ $verbose == true ]]; then
+            echo $QUEUEURL ; 
+            echo "--------------------------------------"
+          fi
         else 
           echo "Queue URL NOT FOUND. Exiting script with error"
           echo "--------------------------------------"
@@ -96,17 +93,22 @@ runs:
         #Sleep to ensure the job gets started. Sometimes Jenkins has a few seconds pause
         sleep 10
         BUILDJSON=$(curl -X GET -u "$userName:$password"   "$QUEUEURL/api/json?pretty=true")
-        echo "BUILDJSON:"
-        echo "--------------------------------------"
-        echo $BUILDJSON
-        echo "--------------------------------------"
+
+        if [[ $verbose == true ]]; then
+          echo "BUILDJSON:"
+          echo "--------------------------------------"
+          echo $BUILDJSON
+          echo "--------------------------------------"
+        fi
 
         #regex_blocked_status="\"blocked\"\s*:\s*([a-z]+)"
         regex="\"blocked\"\s*:\s*([a-z]+).*\"executable\".*?\"number\"\s*:\s*([0-9]+).*?\"url\"\s*:\s*\"(.*?)\""
         if [[ $BUILDJSON =~ $regex ]]; then
-          echo "blocked: " ${BASH_REMATCH[1]} ;
-          echo "build number: " ${BASH_REMATCH[2]} ;
-          echo "build URL: " ${BASH_REMATCH[3]} ;
+          if [[ $verbose == true ]]; then
+            echo "blocked: " ${BASH_REMATCH[1]} ;
+            echo "build number: " ${BASH_REMATCH[2]} ;
+            echo "build URL: " ${BASH_REMATCH[3]} ;
+          fi
           BUILDURL=${BASH_REMATCH[3]};
           if [[ "${BASH_REMATCH[1]}" == "true" ]]; then
             echo "Build Blocked. Exiting script with error"
@@ -131,16 +133,20 @@ runs:
         #Short pause
         sleep 2
         JOBSTATUSJSON=$(curl -X GET -u "$userName:$password"   "$BUILDURL/api/json?pretty=true")
-        echo "JOBSTATUSJSON:"
-        echo "--------------------------------------"
-        echo $JOBSTATUSJSON
-        echo "--------------------------------------"
+        if [[ $verbose == true ]]; then
+          echo "JOBSTATUSJSON:"
+          echo "--------------------------------------"
+          echo $JOBSTATUSJSON
+          echo "--------------------------------------"
+        fi
 
         regex="\"building\"\s*:\s*([a-z]+).*?\"result\"\s*:\s*\"?([a-zA-Z]+)\"?."
         if [[ $JOBSTATUSJSON =~ $regex ]]; then
-          echo "Job Status"
-          echo "building: " ${BASH_REMATCH[1]} ;
-          echo "result: " ${BASH_REMATCH[2]} ;
+          if [[ $verbose == true ]]; then
+            echo "Job Status"
+            echo "building: " ${BASH_REMATCH[1]} ;
+            echo "result: " ${BASH_REMATCH[2]} ;
+          fi
           BUILDING=${BASH_REMATCH[1]} ;
           RESULT=${BASH_REMATCH[2]} ;
         else
@@ -153,26 +159,26 @@ runs:
         while [ "$BUILDING" == "true" ]
         do 
             #WAIT pollTime SECONDS
+            echo "pause for $pollTime seconds"
             sleep $pollTime
             currentTimeSeconds=$(date +%s)
-            echo $currentTimeSeconds
-            echo $endTimeSeconds
             if [[ "$currentTimeSeconds" > "$endTimeSeconds" ]]; then
               echo "Timeout value reached. Exiting with error due to timeout"
               echo "--------------------------------------"
               exit 1
             fi
             #Get the status
+            echo "polling"
             JOBSTATUSJSON=$(curl -X GET -u "$userName:$password"   "$BUILDURL/api/json?pretty=true")
             regex="\"building\"\s*:\s*([a-z]+).*?\"result\"\s*:\s*\"?([a-zA-Z]+)\"?."
             if [[ $JOBSTATUSJSON =~ $regex ]]; then
+              if [[ $verbose == true ]]; then
                 echo "Job Status"
                 echo "building: " ${BASH_REMATCH[1]} ;
                 echo "result: " ${BASH_REMATCH[2]} ;
-                BUILDING=${BASH_REMATCH[1]} ;
-                RESULT=${BASH_REMATCH[2]} ;
-                #building=${BASH_REMATCH[1]}
-                #building_result=${BASH_REMATCH[2]}
+              fi
+              BUILDING=${BASH_REMATCH[1]} ;
+              RESULT=${BASH_REMATCH[2]} ;
             else
                 echo "Build status NOT FOUND. Exiting script with error"
                 echo "--------------------------------------"
