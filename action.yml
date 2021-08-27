@@ -92,7 +92,7 @@ runs:
         #STEP 4: Get the JobID and URL using the queue location
         #Sleep to ensure the job gets started. Sometimes Jenkins has a few seconds pause
         sleep 10
-        BUILDJSON=$(curl -X GET -u "$userName:$password"   "$QUEUEURL/api/json?pretty=true")
+        BUILDJSON=$(curl -s -X GET -u "$userName:$password"   "$QUEUEURL/api/json?pretty=true")
 
         if [[ $verbose == true ]]; then
           echo "BUILDJSON:"
@@ -132,14 +132,14 @@ runs:
         #ABORTED - Manually aborted
         #Short pause
         sleep 2
-        JOBSTATUSJSON=$(curl -X GET -u "$userName:$password"   "$BUILDURL/api/json?pretty=true")
+        JOBSTATUSJSON=$(curl -s -X GET -u "$userName:$password"   "$BUILDURL/api/json?pretty=true")
         if [[ $verbose == true ]]; then
           echo "JOBSTATUSJSON:"
           echo "--------------------------------------"
           echo $JOBSTATUSJSON
           echo "--------------------------------------"
         fi
-        echo "test 1"
+        
         regex="\"building\"\s*:\s*([a-z]+).*?\"result\"\s*:\s*\"?([a-zA-Z]+)\"?."
         if [[ $JOBSTATUSJSON =~ $regex ]]; then
           if [[ $verbose == true ]]; then
@@ -155,7 +155,7 @@ runs:
           exit 1 
         fi
 
-        echo "test 2"
+        
         while [ "$BUILDING" == "true" ]
         do 
             #WAIT pollTime SECONDS
@@ -169,7 +169,7 @@ runs:
             fi
             #Get the status
             echo "polling"
-            JOBSTATUSJSON=$(curl -X GET -u "$userName:$password"   "$BUILDURL/api/json?pretty=true")
+            JOBSTATUSJSON=$(curl -s -X GET -u "$userName:$password"   "$BUILDURL/api/json?pretty=true")
             regex="\"building\"\s*:\s*([a-z]+).*?\"result\"\s*:\s*\"?([a-zA-Z]+)\"?."
             if [[ $JOBSTATUSJSON =~ $regex ]]; then
               if [[ $verbose == true ]]; then
