@@ -17,7 +17,7 @@ jobs:
       - id: testjenkinsaction
         uses: mickeygoussetorg/trigger-jenkins-job@main
         with:
-          jenkins-server:  "http://13.84.166.87" # URL of the jenkins server
+          jenkins-server:  "http://13.84.166.87:8080" # URL of the jenkins server
           jenkins-job: "mySampleApp" # The name of the jenkins job to run
           jenkins-username: ${{ secrets.JENKINS_USERNAME }} # user name for accessing jenkins
           jenkins-pat: ${{ secrets.JENKINS_PAT }} # personal Access token for accessing Jenkins
