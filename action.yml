@@ -139,7 +139,7 @@ runs:
           echo $JOBSTATUSJSON
           echo "--------------------------------------"
         fi
-
+        echo "test 1"
         regex="\"building\"\s*:\s*([a-z]+).*?\"result\"\s*:\s*\"?([a-zA-Z]+)\"?."
         if [[ $JOBSTATUSJSON =~ $regex ]]; then
           if [[ $verbose == true ]]; then
@@ -155,7 +155,7 @@ runs:
           exit 1 
         fi
 
-
+        echo "test 2"
         while [ "$BUILDING" == "true" ]
         do 
             #WAIT pollTime SECONDS
