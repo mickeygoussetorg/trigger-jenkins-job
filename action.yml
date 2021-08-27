@@ -205,4 +205,6 @@ runs:
                 ;;
         esac
       shell: bash
-    
+branding:
+  icon: 'arrow-down-circle'
+  color: 'gray-dark'
