@@ -57,7 +57,6 @@ runs:
         #Generate Crumb value
         CRUMB=`curl -s -u "$userName:$password" $urlOfJenkinsServer'/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,":",//crumb)'`
         
-        #TRIGGERJOBJSON=$(curl -I -s -X POST -u "${{secrets.JENKINS_USERNAME}}:${{secrets.JENKINS_API_TOKEN}}"  -H "$CRUMB" "$urlOfJenkinsBuildToStart"/build)
         TRIGGERJOBJSON=$(curl -I -s -X POST -u "$userName:$password"  -H "$CRUMB" "$urlOfJenkinsServer"/job/"$jenkinsJobName"/build)
         echo "TRIGGERJOBJSON:"
         echo "--------------------------------------"
@@ -96,7 +95,7 @@ runs:
         #STEP 4: Get the JobID and URL using the queue location
         #Sleep to ensure the job gets started. Sometimes Jenkins has a few seconds pause
         sleep 10
-        BUILDJSON=$(curl -X GET -u "${{secrets.JENKINS_USERNAME}}:${{secrets.JENKINS_API_TOKEN}}"   "$QUEUEURL/api/json?pretty=true")
+        BUILDJSON=$(curl -X GET -u "$userName:$password"   "$QUEUEURL/api/json?pretty=true")
         echo "BUILDJSON:"
         echo "--------------------------------------"
         echo $BUILDJSON
@@ -131,7 +130,7 @@ runs:
         #ABORTED - Manually aborted
         #Short pause
         sleep 2
-        JOBSTATUSJSON=$(curl -X GET -u "${{secrets.JENKINS_USERNAME}}:${{secrets.JENKINS_API_TOKEN}}"   "$BUILDURL/api/json?pretty=true")
+        JOBSTATUSJSON=$(curl -X GET -u "$userName:$password"   "$BUILDURL/api/json?pretty=true")
         echo "JOBSTATUSJSON:"
         echo "--------------------------------------"
         echo $JOBSTATUSJSON
@@ -164,7 +163,7 @@ runs:
               exit 1
             fi
             #Get the status
-            JOBSTATUSJSON=$(curl -X GET -u "${{secrets.JENKINS_USERNAME}}:${{secrets.JENKINS_API_TOKEN}}"   "$BUILDURL/api/json?pretty=true")
+            JOBSTATUSJSON=$(curl -X GET -u "$userName:$password"   "$BUILDURL/api/json?pretty=true")
             regex="\"building\"\s*:\s*([a-z]+).*?\"result\"\s*:\s*\"?([a-zA-Z]+)\"?."
             if [[ $JOBSTATUSJSON =~ $regex ]]; then
                 echo "Job Status"
