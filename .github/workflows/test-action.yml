@@ -23,5 +23,5 @@ jobs:
           jenkins-pat: ${{ secrets.JENKINS_PAT }} # personal Access token for accessing Jenkins
           poll-time: 10 # how often to poll the jenkins server for results
           timeout-value: 600 # How long to poll before timing out the action
-          verbose: false # true/false - turns on extra logging
+          verbose: true # true/false - turns on extra logging
       
