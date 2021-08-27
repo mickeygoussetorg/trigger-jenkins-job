@@ -197,12 +197,10 @@ runs:
         case $RESULT in
             SUCCESS)
                 echo "Build completed successfully"
-                echo "--------------------------------------"
                 exit 0
                 ;;
             *)
                 echo "Build DID NOT COMPLETE successfully"
-                echo "--------------------------------------"
                 exit 1
                 ;;
         esac
