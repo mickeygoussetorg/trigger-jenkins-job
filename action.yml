@@ -164,6 +164,7 @@ runs:
         do 
             #WAIT pollTime SECONDS
             echo "pause for $pollTime seconds"
+            echo "--------------------------------------"
             sleep $pollTime
             currentTimeSeconds=$(date +%s)
             if [[ "$currentTimeSeconds" > "$endTimeSeconds" ]]; then
