@@ -15,7 +15,7 @@ jobs:
       # - uses: actions/checkout@v2
 
       - id: testjenkinsaction
-        uses: mickeygoussetorg/trigger-jenkins-job@main
+        uses: mickeygoussetorg/trigger-jenkins-job@v1
         with:
           jenkins-server:  "${{ secrets.JENKINS_SERVER }}" # URL of the jenkins server
           jenkins-job: "mySampleApp" # The name of the jenkins job to run
