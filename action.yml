@@ -63,7 +63,7 @@ runs:
         #Regex to get the queue URL
         regex="Location:\s*(http.*\/queue\/item\/([0-9]+)\/)"
         #Does the returned value contain 201 Created
-        if [[ "$TRIGGERJOBJSON" == *"201 Created"* ]]; then
+        if [[ "$TRIGGERJOBJSON" == *"201"* ]]; then
           echo "Job triggered successfully"
           echo "--------------------------------------"
         else
