@@ -107,11 +107,11 @@ runs:
           if [[ $verbose == true ]]; then
             echo "blocked: " ${BASH_REMATCH[1]} ;
             echo "build number: " ${BASH_REMATCH[2]} ;
-            echo "build URL: " ${BASH_REMATCH[3]} ;
+            echo "build URL: " ${urlOfJenkinsServer}/job/${jenkinsJobName}/${BASH_REMATCH[2]}" ;
           fi
           echo "Job URL retrieved"
           echo "--------------------------------------"
-          BUILDURL=${BASH_REMATCH[3]};
+          BUILDURL="${urlOfJenkinsServer}/job/${jenkinsJobName}/${BASH_REMATCH[2]}";
           if [[ "${BASH_REMATCH[1]}" == "true" ]]; then
             echo "Build Blocked. Exiting script with error"
             echo "--------------------------------------"
