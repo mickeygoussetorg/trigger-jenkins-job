@@ -61,7 +61,7 @@ runs:
 
         #STEP 2: Did STEP 1 return a 201. If so, continue, if not, stop the script
         #Regex to get the queue URL
-        regex="(\/queue\/item\/([0-9]+)\/)"
+        regex="(\/queue\/item\/([0-9]+))"
         #Does the returned value contain 201 Created
         if [[ $TRIGGERJOBJSON == *"201"* ]]; then
           echo "Job triggered successfully"
