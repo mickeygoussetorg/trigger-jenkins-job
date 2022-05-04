@@ -78,7 +78,7 @@ runs:
         if [[ $TRIGGERJOBJSON =~ $regex ]]; then
           echo "Queue URL Found."
           echo "--------------------------------------"
-          QUEUEURL="${urlOfJenkinsServer}${BASH_REMATCH[1]}" ;
+          QUEUEURL="$urlOfJenkinsServer${BASH_REMATCH[1]}" ;
           if [[ $verbose == true ]]; then
             echo $QUEUEURL ; 
             echo "--------------------------------------"
