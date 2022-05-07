@@ -61,9 +61,9 @@ runs:
 
         #STEP 2: Did STEP 1 return a 201. If so, continue, if not, stop the script
         #Regex to get the queue URL
-        regex="Location:\s*(http.*\/queue\/item\/([0-9]+)\/)"
+        regex="(\/queue\/item\/([0-9]+))"
         #Does the returned value contain 201 Created
-        if [[ "$TRIGGERJOBJSON" == *"201 Created"* ]]; then
+        if [[ $TRIGGERJOBJSON == *"201"* ]]; then
           echo "Job triggered successfully"
           echo "--------------------------------------"
         else
@@ -78,7 +78,7 @@ runs:
         if [[ $TRIGGERJOBJSON =~ $regex ]]; then
           echo "Queue URL Found."
           echo "--------------------------------------"
-          QUEUEURL=${BASH_REMATCH[1]} ;
+          QUEUEURL="$urlOfJenkinsServer${BASH_REMATCH[1]}" ;
           if [[ $verbose == true ]]; then
             echo $QUEUEURL ; 
             echo "--------------------------------------"
@@ -107,11 +107,11 @@ runs:
           if [[ $verbose == true ]]; then
             echo "blocked: " ${BASH_REMATCH[1]} ;
             echo "build number: " ${BASH_REMATCH[2]} ;
-            echo "build URL: " ${BASH_REMATCH[3]} ;
+            echo "build URL: ${urlOfJenkinsServer}/job/${jenkinsJobName}/${BASH_REMATCH[2]}" ;
           fi
           echo "Job URL retrieved"
           echo "--------------------------------------"
-          BUILDURL=${BASH_REMATCH[3]};
+          BUILDURL="${urlOfJenkinsServer}/job/${jenkinsJobName}/${BASH_REMATCH[2]}";
           if [[ "${BASH_REMATCH[1]}" == "true" ]]; then
             echo "Build Blocked. Exiting script with error"
             echo "--------------------------------------"
