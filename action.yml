@@ -1,4 +1,4 @@
-name: 'Trigger Jenkins Job and Return the Result'
+name: 'Trigger Jenkins Job and Return Result'
 description: 'I am used to trigger a Jenkins job and return the success/failure of the job run'
 inputs:
   jenkins-server:  # URL of the jenkins server
