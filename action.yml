@@ -1,6 +1,10 @@
 name: 'Trigger Jenkins Job and Return Result'
 description: 'I am used to trigger a Jenkins job and return the success/failure of the job run'
 inputs:
+  git-branch: # Name of emitter branch
+    description: 'Branch name'
+    required: true
+    default: "main"
   jenkins-server:  # URL of the jenkins server
     description: 'URL of the Jenkins server'
     required: true
@@ -32,6 +36,7 @@ runs:
     - id: trigger-jenkins-job-using-api
       run: |
         #Parameters
+        branchName="${{ inputs.git-branch }}"
         urlOfJenkinsServer="${{ inputs.jenkins-server }}"
         jenkinsJobName="${{ inputs.jenkins-job }}"
         pollTime=${{ inputs.poll-time }}
@@ -50,7 +55,7 @@ runs:
 
         #Generate Crumb value
         CRUMB=`curl -s -u "$userName:$password" $urlOfJenkinsServer'/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,":",//crumb)'`
-        TRIGGERJOBJSON=$(curl -I -s -X POST -u "$userName:$password"  -H "$CRUMB" "$urlOfJenkinsServer"/job/"$jenkinsJobName"/build)
+        TRIGGERJOBJSON=$(curl -I -s -X POST -u "$userName:$password"  -H "$CRUMB" "$urlOfJenkinsServer"/job/"$jenkinsJobName"/buildWithParameters?BRANCH_NAME=$branchName)
         
         if [[ $verbose == true ]]; then
           echo "Results of Triggering The Job:"
