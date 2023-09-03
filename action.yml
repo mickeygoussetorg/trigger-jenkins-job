@@ -49,7 +49,7 @@ runs:
         if [[ -n "$parameters" ]]; then
           BUILDCMD="buildWithParameters"
           echo "PARAMS: $PARAMARGS"
-          for $param in $parameters; do
+          for param in $parameters; do
             echo "-F $param " >> $PARAMARGS
             echo "PARAMS: $PARAMARGS"
           done
