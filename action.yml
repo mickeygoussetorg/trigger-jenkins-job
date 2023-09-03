@@ -42,7 +42,7 @@ runs:
         verbose=${{ inputs.verbose }}
         userName=${{ inputs.jenkins-username }}
         password=${{ inputs.jenkins-pat }}
-        paramQueryString=${{ inputs.paramQueryString }}
+        paramQueryString="${{ inputs.paramQueryString }}"
 
         BUILDCMD="build"
         if [[ -n $parameters ]]; then
