@@ -46,7 +46,7 @@ runs:
 
         BUILDCMD="build"
         PARAMARGS=""
-        if [[ -n $parameters ]]; then
+        if [[ -n "$parameters" ]]; then
           BUILDCMD="buildWithParameters"
           echo "PARAMS: $PARAMARGS"
           for $param in $parameters; do
