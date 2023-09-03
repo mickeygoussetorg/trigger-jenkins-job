@@ -49,7 +49,7 @@ runs:
         if [[ -n "$parameters" ]]; then
           echo "PARAMS: $PARAMARGS"
           for param in $parameters; do
-            if [[ -n "$PARAMARGS" ]]; do
+            if [[ -n "$PARAMARGS" ]]; then
               PARAMARGS="${PARAMARGS}&"
             fi
             PARAMARGS="${PARAMARGS}${params}"
