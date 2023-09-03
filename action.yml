@@ -47,12 +47,15 @@ runs:
         BUILDCMD="build"
         PARAMARGS=""
         if [[ -n "$parameters" ]]; then
-          BUILDCMD="buildWithParameters"
           echo "PARAMS: $PARAMARGS"
           for param in $parameters; do
-            PARAMARGS="$PARAMARGS -F \"$param\""
+            if [[ -n "$PARAMARGS ]]; do
+              PARAMARGS="${PARAMARGS}&"
+            fi
+            PARAMARGS="${PARAMARGS}${params}"
             echo "PARAMS: $PARAMARGS"
           done
+          BUILDCMD="buildWithParameters?${PARAMARGS}"
         fi
 
         startTime=$(date)
@@ -65,7 +68,7 @@ runs:
 
         #Generate Crumb value
         CRUMB=`curl -s -u "$userName:$password" $urlOfJenkinsServer'/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,":",//crumb)'`
-        echo "curl -I -s -X POST -u \"$userName:$password\" $PARAMARGS -H \"$CRUMB\" \"$urlOfJenkinsServer\"/job/\"$jenkinsJobName/$BUILDCMD\""
+        echo "curl -I -s -X POST -u \"$userName:$password\" -H \"$CRUMB\" \"$urlOfJenkinsServer\"/job/\"$jenkinsJobName/$BUILDCMD\""
         TRIGGERJOBJSON=$(curl -I -s -X POST -u "$userName:$password" "$PARAMARGS" -H "$CRUMB" "$urlOfJenkinsServer"/job/"$jenkinsJobName/$BUILDCMD")
         
         if [[ $verbose == true ]]; then
