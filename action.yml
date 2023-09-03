@@ -50,7 +50,7 @@ runs:
           BUILDCMD="buildWithParameters"
           echo "PARAMS: $PARAMARGS"
           for param in $parameters; do
-            PARAMARGS="$PARAMARGS -F $param"
+            PARAMARGS="$PARAMARGS -F \"$param\""
             echo "PARAMS: $PARAMARGS"
           done
         fi
@@ -62,11 +62,10 @@ runs:
 
         #STEP 1: Trigger the Jenkins Job
         #This will return a 201 if the job is created, so we need to test for this
-        echo "curl -I -s -X POST -u \"$userName:$password\" $PARAMARGS -H \"$CRUMB\" \"$urlOfJenkinsServer\"/job/\"$jenkinsJobName/$BUILDCMD\""
 
         #Generate Crumb value
         CRUMB=`curl -s -u "$userName:$password" $urlOfJenkinsServer'/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,":",//crumb)'`
-        echo "CRUMB: $CRUMB"
+        echo "curl -I -s -X POST -u \"$userName:$password\" $PARAMARGS -H \"$CRUMB\" \"$urlOfJenkinsServer\"/job/\"$jenkinsJobName/$BUILDCMD\""
         TRIGGERJOBJSON=$(curl -I -s -X POST -u "$userName:$password" "$PARAMARGS" -H "$CRUMB" "$urlOfJenkinsServer"/job/"$jenkinsJobName/$BUILDCMD")
         
         if [[ $verbose == true ]]; then
