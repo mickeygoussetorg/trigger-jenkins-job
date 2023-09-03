@@ -66,7 +66,7 @@ runs:
 
         #Generate Crumb value
         CRUMB=`curl -s -u "$userName:$password" $urlOfJenkinsServer'/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,":",//crumb)'`
-        TRIGGERJOBJSON=$(curl -I -s -X POST -u "$userName:$password" $PARAMARGS -H "$CRUMB" "$urlOfJenkinsServer"/job/"$jenkinsJobName/$BUILDCMD")
+        TRIGGERJOBJSON=$(curl -I -s -X POST -u "$userName:$password" "$PARAMARGS" -H "$CRUMB" "$urlOfJenkinsServer"/job/"$jenkinsJobName/$BUILDCMD")
         
         if [[ $verbose == true ]]; then
           echo "Results of Triggering The Job:"
