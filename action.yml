@@ -47,6 +47,7 @@ runs:
         BUILDCMD="build"
         if [[ -n $parameters ]]; then
           BUILDCMD="buildWithParameters?${paramQueryString}"
+        fi
 
         startTime=$(date)
         startTimeSeconds=$(date -d "$startTime" +%s) 
