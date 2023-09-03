@@ -50,7 +50,7 @@ runs:
           BUILDCMD="buildWithParameters"
           echo "PARAMS: $PARAMARGS"
           for param in $parameters; do
-            echo "-F $param " >> $PARAMARGS
+            PARAMARGS="$PARAMARGS -F $param"
             echo "PARAMS: $PARAMARGS"
           done
         fi
