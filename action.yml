@@ -25,6 +25,9 @@ inputs:
     description: 'true/false - turns on verbose logging'
     required: false
     default: false
+  paramQueryString:
+    description: 'a query string specifying build parameters'
+    required: false
   
 runs:
   using: "composite"
@@ -39,6 +42,11 @@ runs:
         verbose=${{ inputs.verbose }}
         userName=${{ inputs.jenkins-username }}
         password=${{ inputs.jenkins-pat }}
+        paramQueryString=${{ inputs.paramQueryString }}
+
+        BUILDCMD="build"
+        if [[ -n $parameters ]]; then
+          BUILDCMD="buildWithParameters?${paramQueryString}"
 
         startTime=$(date)
         startTimeSeconds=$(date -d "$startTime" +%s) 
@@ -50,7 +58,7 @@ runs:
 
         #Generate Crumb value
         CRUMB=`curl -s -u "$userName:$password" $urlOfJenkinsServer'/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,":",//crumb)'`
-        TRIGGERJOBJSON=$(curl -I -s -X POST -u "$userName:$password"  -H "$CRUMB" "$urlOfJenkinsServer"/job/"$jenkinsJobName"/build)
+        TRIGGERJOBJSON=$(curl -I -s -X POST -u "$userName:$password"  -H "$CRUMB" "$urlOfJenkinsServer"/job/"$jenkinsJobName/$BUILDCMD")
         
         if [[ $verbose == true ]]; then
           echo "Results of Triggering The Job:"
