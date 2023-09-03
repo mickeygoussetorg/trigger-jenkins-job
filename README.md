@@ -35,6 +35,7 @@ jobs:
           poll-time: 10 # how often (seconds) to poll the jenkins server for results
           timeout-value: 600 # How long (seconds) to poll before timing out the action
           verbose: true # true/false - turns on extra logging
+          parameters: "PARAM1=VALUE PARAM2=VALUE" 
 ```
 
 ## Input Variables
@@ -48,3 +49,4 @@ Variable Name | Description
 **poll-time** | Time, in seconds, of how often the action should poll the Jenkins job to see if it has completed
 **timeout-value** | Time, in seconds, of how long the action should run before timing out, i.e. how long should the action wait for Jenkins to complete the job
 **verbose** | true/false. This value, when true, enables extra logging in the build output. By default it is false, meaning minimal logging
+**parameters** | A set of Jenkins build parameters to pass through on the job trigger. Example: "PARAM1=VALUE PARAM2=VALUE"
