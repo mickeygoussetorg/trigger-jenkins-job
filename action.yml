@@ -52,7 +52,7 @@ runs:
             if [[ -n "$PARAMARGS" ]]; then
               PARAMARGS="${PARAMARGS}&"
             fi
-            PARAMARGS="${PARAMARGS}${params}"
+            PARAMARGS="${PARAMARGS}${param}"
             echo "PARAMS: $PARAMARGS"
           done
           BUILDCMD="buildWithParameters?${PARAMARGS}"
