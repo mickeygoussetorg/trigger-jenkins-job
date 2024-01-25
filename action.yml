@@ -39,13 +39,11 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - id: trigger-jenkins-job-using-api
+    - id: trigger-jenkins-job-using-api-1
       run: |
         #Parameters
         urlOfJenkinsServer="${{ inputs.jenkins-server }}"
         jenkinsJobName="${{ inputs.jenkins-job }}"
-        pollTime=${{ inputs.poll-time }}
-        timeoutValue=${{ inputs.timeout-value }}
         verbose=${{ inputs.verbose }}
         userName=${{ inputs.jenkins-username }}
         password=${{ inputs.jenkins-pat }}
@@ -127,19 +125,38 @@ runs:
           echo "--------------------------------------"
         fi
 
+        echo "buildjson=${BUILDJSON}" >> $GITHUB_OUTPUT
+        echo "blocked=${BASH_REMATCH[1]}" >> GITHUB_OUTPUT
+        echo "buildnum=${BASH_REMATCH[2]}" >> GITHUB_OUTPUT
+        echo "buildurl=${BASE_REMATCH[3]}" >> GITHUB_OUTPUT
+      shell: bash
+    - uses: mshick/add-pr-comment@v2
+      with:
+        refresh-message-position: true
+        message-id: jenkins-url
+        message: Jenkins Job started at: ${{ steps.trigger-jenkins-job-using-api-1.outputs.buildurl }}
+    - trigger-jenkins-job-using-api-2:
+      run: |
+        pollTime=${{ inputs.poll-time }}
+        timeoutValue=${{ inputs.timeout-value }}
+        verbose=${{ inputs.verbose }}
+        
+        BUILDJSON=${{ steps.trigger-jenkins-job-using-api-1.outputs.buildjson }}
+        BLOCKED=${{ steps.trigger-jenkins-job-using-api-1.outputs.blocked }}
+        BUILDNUM=${{ steps.trigger-jenkins-job-using-api-1.outputs.buildnum }}
+        BUILDURL=${{ steps.trigger-jenkins-job-using-api-1.outputs.buildurl }}
+        
         #regex_blocked_status="\"blocked\"\s*:\s*([a-z]+)"
         regex="\"blocked\"\s*:\s*([a-z]+).*\"executable\".*?\"number\"\s*:\s*([0-9]+).*?\"url\"\s*:\s*\"(.*?)\""
         if [[ $BUILDJSON =~ $regex ]]; then
           if [[ $verbose == true ]]; then
-            echo "blocked: " ${BASH_REMATCH[1]} ;
-            echo "build number: " ${BASH_REMATCH[2]} ;
-            echo "build URL: " ${BASH_REMATCH[3]} ;
+            echo "blocked: " ${BLOCKED} ;
+            echo "build number: " ${BUILDNUM} ;
+            echo "build URL: " ${BUILDURL} ;
           fi
           echo "Job URL retrieved"
           echo "--------------------------------------"
-          BUILDURL=${BASH_REMATCH[3]};
-          echo "url=${BUILDURL}" >> $GITHUB_OUTPUT
-          if [[ "${BASH_REMATCH[1]}" == "true" ]]; then
+          if [[ "${BLOCKED}" == "true" ]]; then
             echo "Build Blocked. Exiting script with error"
             echo "--------------------------------------"
             exit 1
