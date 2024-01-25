@@ -28,13 +28,6 @@ inputs:
   parameters:
     description: 'build parameters in the format: KEY1=VALUE KEY2=VALUE'
     required: false
-outputs:
-  status: 
-    description: Jenkins Job Status
-    value: ${{ steps.trigger-jenkins-job-using-api.outputs.status }}
-  url: 
-    description: Jenkins Job URL
-    value: ${{ steps.trigger-jenkins-job-using-api.outputs.url }}
 
 runs:
   using: "composite"
