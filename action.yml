@@ -134,7 +134,7 @@ runs:
       with:
         refresh-message-position: true
         message-id: jenkins-url
-        message: Jenkins Job started at: ${{ steps.trigger-jenkins-job-using-api-1.outputs.buildurl }}
+        message: "Jenkins Job started at: ${{ steps.trigger-jenkins-job-using-api-1.outputs.buildurl }}"
     - trigger-jenkins-job-using-api-2:
       run: |
         pollTime=${{ inputs.poll-time }}
