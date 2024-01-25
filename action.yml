@@ -28,6 +28,8 @@ inputs:
   parameters:
     description: 'build parameters in the format: KEY1=VALUE KEY2=VALUE'
     required: false
+outputs:
+  status:
   
 runs:
   using: "composite"
@@ -131,6 +133,7 @@ runs:
           echo "Job URL retrieved"
           echo "--------------------------------------"
           BUILDURL=${BASH_REMATCH[3]};
+          echo "url=${BUILDURL}" >> $GITHUB_OUTPUT
           if [[ "${BASH_REMATCH[1]}" == "true" ]]; then
             echo "Build Blocked. Exiting script with error"
             echo "--------------------------------------"
@@ -213,6 +216,7 @@ runs:
 
         #Once I reach here, building is false, so the job isn't running any longer
         #Therefor, we can check the result
+        echo "status=$RESULT" >> $GITHUB_OUTPUT
         case $RESULT in
             SUCCESS)
                 echo "Build completed successfully"
