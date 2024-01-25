@@ -28,9 +28,7 @@ inputs:
   parameters:
     description: 'build parameters in the format: KEY1=VALUE KEY2=VALUE'
     required: false
-outputs:
-  status:
-  
+
 runs:
   using: "composite"
   steps:
